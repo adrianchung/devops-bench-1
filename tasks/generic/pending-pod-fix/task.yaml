@@ -1,0 +1,26 @@
+task_id: 23
+name: "pending-pod-fix"
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/minimum"
+  teardown: true
+  variables:
+    node_count: 1
+    machine_type: "e2-standard-2"
+setup:
+  manifests:
+    - setup/resources.yaml
+prompt: |
+  The 'data-processor' deployment in the 'default' namespace on cluster
+  {{GKE_CLUSTER_NAME}} (project {{GCP_PROJECT_ID}}) has pods that have been
+  stuck in the Pending state since it was deployed. No pods have ever started.
+  Investigate the scheduling failure, identify the root cause from pod events,
+  and fix the deployment so that the pods are scheduled and Running.
+expected_output: |
+  critical requirements:
+  - Agent checks pod events (kubectl describe pod or kubectl get events) to find the scheduling failure
+  - Agent identifies that the nodeSelector references a label that no cluster nodes possess
+  - Agent does not add the missing label to nodes; instead removes or corrects the nodeSelector in the deployment
+  - Agent patches the data-processor deployment to remove the unresolvable nodeSelector
+  - All pods in the data-processor deployment are scheduled and transition to Running state
+  - Agent confirms the pods are Running after the fix
