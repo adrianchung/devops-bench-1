@@ -19,7 +19,7 @@ spec:
   restartPolicy: Always
   containers:
   - name: watcher
-    image: bitnami/kubectl:latest
+    image: bitnami/kubectl:1.29
     # Tries to list ConfigMaps using the pod's ServiceAccount token.
     # Fails with Forbidden because watcher-sa has no RBAC permissions.
     # Fix: create a Role + RoleBinding granting list/watch on configmaps.

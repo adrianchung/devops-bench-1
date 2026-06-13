@@ -11,13 +11,14 @@ metadata:
   name: compute-quota
   namespace: restricted
 spec:
-  # Quota deliberately tight: only 200m CPU and 256Mi memory total.
-  # Each pod requests 200m CPU, so even 1 pod fills the quota and 3 replicas fail.
-  # Fix: reduce per-pod CPU requests to e.g. 50m so replicas fit within quota.
+  # Quota cap: 100m CPU total across the namespace.
+  # Each pod requests 200m CPU, which exceeds the entire quota on its own,
+  # so ZERO pods can be admitted — not even the first one.
+  # Fix: reduce per-pod CPU requests to ≤33m so 3 replicas fit within 100m.
   hard:
-    requests.cpu: "200m"
+    requests.cpu: "100m"
     requests.memory: "256Mi"
-    limits.cpu: "400m"
+    limits.cpu: "300m"
     limits.memory: "512Mi"
 ---
 apiVersion: apps/v1
@@ -41,12 +42,12 @@ spec:
       containers:
       - name: worker
         image: nginx:1.25
-        # Each replica requests 200m CPU — with 3 replicas that's 600m total,
-        # exceeding the 200m quota. Pods cannot be created.
+        # Each replica requests 200m CPU, which alone exceeds the 100m namespace
+        # quota — so all pod creation attempts are rejected. Zero pods run.
         resources:
           requests:
             cpu: "200m"
-            memory: "128Mi"
+            memory: "64Mi"
           limits:
-            cpu: "400m"
-            memory: "256Mi"
+            cpu: "300m"
+            memory: "128Mi"
