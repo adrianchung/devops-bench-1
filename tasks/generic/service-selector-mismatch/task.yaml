@@ -1,0 +1,28 @@
+task_id: 21
+name: "service-selector-mismatch"
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/minimum"
+  teardown: true
+  variables:
+    node_count: 1
+    machine_type: "e2-standard-2"
+setup:
+  manifests:
+    - setup/resources.yaml
+  commands:
+    - "kubectl rollout status deployment/api-server -n default --timeout=60s"
+prompt: |
+  The 'api-service' Service in the 'default' namespace on cluster {{GKE_CLUSTER_NAME}}
+  (project {{GCP_PROJECT_ID}}) is not routing any traffic to the backend pods.
+  The backend pods appear healthy. Investigate why the Service has no active
+  endpoints, identify the misconfiguration, and fix it so that the Service
+  correctly routes traffic to the running pods.
+expected_output: |
+  critical requirements:
+  - Agent checks Service endpoints (kubectl get endpoints api-service) and finds zero endpoints
+  - Agent inspects both the Service selector and the pod labels to find the mismatch
+  - Agent correctly identifies that the Service selector does not match the pod labels
+  - Agent patches the Service selector to match the pod labels (app=api-server)
+  - After the fix, the Service has at least one active endpoint matching the backend pods
+  - Agent verifies the endpoints are populated after the patch

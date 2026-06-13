@@ -1,0 +1,30 @@
+task_id: 22
+name: "rbac-missing-fix"
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/minimum"
+  teardown: true
+  variables:
+    node_count: 1
+    machine_type: "e2-standard-2"
+setup:
+  manifests:
+    - setup/resources.yaml
+  commands:
+    - "kubectl wait pod/config-watcher -n default --for=condition=Ready --timeout=60s || true"
+prompt: |
+  The 'config-watcher' pod in the 'default' namespace on cluster {{GKE_CLUSTER_NAME}}
+  (project {{GCP_PROJECT_ID}}) keeps restarting. The pod runs under the
+  'watcher-sa' ServiceAccount and is supposed to monitor ConfigMaps in the
+  'default' namespace, but it fails with a permissions error. Create the
+  appropriate RBAC resources so the 'watcher-sa' ServiceAccount can list and
+  watch ConfigMaps in the 'default' namespace, then ensure the pod is running
+  and no longer restarting.
+expected_output: |
+  critical requirements:
+  - Agent inspects the config-watcher pod logs to find the Forbidden/RBAC error
+  - Agent creates a Role in the 'default' namespace granting list and watch on configmaps
+  - Agent creates a RoleBinding that binds the Role to the 'watcher-sa' ServiceAccount in the 'default' namespace
+  - Agent does not grant broader permissions than necessary (no ClusterRole for namespace-scoped access)
+  - The config-watcher pod restarts and successfully lists ConfigMaps without a Forbidden error
+  - Agent verifies the pod is running and healthy after applying RBAC resources

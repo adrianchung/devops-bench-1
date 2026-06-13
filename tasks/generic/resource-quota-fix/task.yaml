@@ -1,0 +1,27 @@
+task_id: 24
+name: "resource-quota-fix"
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/minimum"
+  teardown: true
+  variables:
+    node_count: 1
+    machine_type: "e2-standard-2"
+setup:
+  manifests:
+    - setup/resources.yaml
+prompt: |
+  The 'worker' deployment in the 'restricted' namespace on cluster
+  {{GKE_CLUSTER_NAME}} (project {{GCP_PROJECT_ID}}) cannot run any pods.
+  The deployment was created successfully, but zero pods are running.
+  Investigate the issue using kubectl, diagnose the root cause from events
+  or quota status, and fix the problem so the deployment has at least one
+  Running pod. Do not delete the ResourceQuota or the namespace.
+expected_output: |
+  critical requirements:
+  - Agent checks the deployment and ReplicaSet events to find the pod creation failure
+  - Agent discovers that the namespace ResourceQuota is preventing pod creation (exceeded cpu or memory)
+  - Agent checks the current ResourceQuota usage with kubectl describe resourcequota
+  - Agent reduces the pod resource requests in the worker deployment to fit within the quota (does not delete the quota)
+  - At least one pod in the worker deployment transitions to Running state
+  - Agent verifies at least one pod is Running after the fix

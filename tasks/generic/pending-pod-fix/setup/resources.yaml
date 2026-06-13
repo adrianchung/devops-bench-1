@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-processor
+  namespace: default
+  labels:
+    app: data-processor
+    bench: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: data-processor
+  template:
+    metadata:
+      labels:
+        app: data-processor
+    spec:
+      # Intentionally impossible nodeSelector — no cluster nodes have this label.
+      # Fix: remove the nodeSelector block from the deployment spec.
+      nodeSelector:
+        accelerator: nvidia-tesla-a100
+      containers:
+      - name: processor
+        image: nginx:1.25
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"

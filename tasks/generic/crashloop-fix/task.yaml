@@ -1,0 +1,28 @@
+task_id: 20
+name: "crashloop-fix"
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/minimum"
+  teardown: true
+  variables:
+    node_count: 1
+    machine_type: "e2-standard-2"
+setup:
+  manifests:
+    - setup/resources.yaml
+  commands:
+    - "kubectl rollout status deployment/webapp -n default --timeout=30s || true"
+prompt: |
+  The 'webapp' deployment in the 'default' namespace on cluster {{GKE_CLUSTER_NAME}}
+  (project {{GCP_PROJECT_ID}}) is experiencing a CrashLoopBackOff. Investigate the
+  root cause by examining pod logs and Kubernetes events, then apply a targeted fix
+  so that all pods in the deployment are Running and Ready. Do not delete and recreate
+  the deployment — patch the existing resource.
+expected_output: |
+  critical requirements:
+  - Agent uses kubectl to inspect the webapp deployment and pod status in the default namespace
+  - Agent retrieves pod logs or describes pod events to identify the crash cause
+  - Agent correctly diagnoses that the container fails due to an invalid nginx configuration path
+  - Agent patches the existing deployment to fix the misconfigured command or args (does not delete/recreate)
+  - All pods in the webapp deployment transition to Running and Ready state
+  - Agent verifies pod health after the fix (e.g. kubectl get pods or rollout status)

@@ -215,6 +215,8 @@ def load_evaluation_data(input_path):
                     "verification_spec": content.get("verification_spec"),
                     "infrastructure": content.get("infrastructure", {}),
                     "documentation": docs,
+                    "setup": content.get("setup"),
+                    "task_dir": os.path.abspath(os.path.dirname(input_path)),
                 }
             ]
     else:
@@ -294,6 +296,26 @@ def load_configuration_context():
     )
 
     return bench_agent_type, agent_target, judge_model, project_id, cluster_name
+
+
+def apply_task_setup(setup_config: dict, task_dir: str) -> None:
+    """Applies setup manifests and commands to the cluster before agent execution."""
+    if not setup_config:
+        return
+
+    manifests = setup_config.get("manifests", [])
+    for manifest in manifests:
+        manifest_path = manifest if os.path.isabs(manifest) else os.path.join(task_dir, manifest)
+        if not os.path.exists(manifest_path):
+            print(f"Warning: Setup manifest not found: {manifest_path}")
+            continue
+        print(f"Applying setup manifest: {manifest_path}")
+        subprocess.run(["kubectl", "apply", "-f", manifest_path], check=True)
+
+    commands = setup_config.get("commands", [])
+    for cmd in commands:
+        print(f"Running setup command: {cmd}")
+        subprocess.run(cmd, shell=True, check=True)
 
 
 def execute_agent(bench_agent_type, agent_target, prompt, context):
@@ -732,6 +754,13 @@ def main():
             prompt = replace_placeholders(
                 item["input"], project_id, active_cluster_name
             )
+
+            # Apply setup manifests/commands to establish initial cluster state
+            setup_config = item.get("setup")
+            task_dir = item.get("task_dir", ".")
+            if setup_config:
+                print(f"--- Applying Task Setup for: {item['name']} ---")
+                apply_task_setup(setup_config, task_dir)
 
             target_deployment = os.environ.get(
                 "TARGET_DEPLOYMENT_NAME", "hypercomputer-d1-frontend"

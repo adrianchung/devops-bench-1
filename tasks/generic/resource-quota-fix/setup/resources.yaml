@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: restricted
+  labels:
+    bench: "true"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: compute-quota
+  namespace: restricted
+spec:
+  # Quota cap: 100m CPU total across the namespace.
+  # Each pod requests 200m CPU, which exceeds the entire quota on its own,
+  # so ZERO pods can be admitted — not even the first one.
+  # Fix: reduce per-pod CPU requests to ≤33m so 3 replicas fit within 100m.
+  hard:
+    requests.cpu: "100m"
+    requests.memory: "256Mi"
+    limits.cpu: "300m"
+    limits.memory: "512Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: restricted
+  labels:
+    app: worker
+    bench: "true"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: nginx:1.25
+        # Each replica requests 200m CPU, which alone exceeds the 100m namespace
+        # quota — so all pod creation attempts are rejected. Zero pods run.
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "64Mi"
+          limits:
+            cpu: "300m"
+            memory: "128Mi"

@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watcher-sa
+  namespace: default
+  labels:
+    bench: "true"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: config-watcher
+  namespace: default
+  labels:
+    app: config-watcher
+    bench: "true"
+spec:
+  serviceAccountName: watcher-sa
+  restartPolicy: Always
+  containers:
+  - name: watcher
+    image: bitnami/kubectl:1.29
+    # Tries to list ConfigMaps using the pod's ServiceAccount token.
+    # Fails with Forbidden because watcher-sa has no RBAC permissions.
+    # Fix: create a Role + RoleBinding granting list/watch on configmaps.
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      echo "Starting ConfigMap watcher..."
+      kubectl get configmap -n default
+      EXIT=$?
+      if [ $EXIT -ne 0 ]; then
+        echo "ERROR: Cannot list ConfigMaps — check RBAC for watcher-sa"
+        exit 1
+      fi
+      echo "ConfigMap list succeeded. Watching for changes..."
+      kubectl get configmap -n default --watch
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "64Mi"
+      limits:
+        cpu: "100m"
+        memory: "128Mi"

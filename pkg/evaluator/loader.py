@@ -100,6 +100,8 @@ def load_from_tasks_dir(dir_path: str) -> list:
                                 "verification_spec": verification_spec,
                                 "infrastructure": content.get("infrastructure", {}),
                                 "documentation": docs,
+                                "setup": content.get("setup"),
+                                "task_dir": os.path.abspath(root),
                             }
                         )
             except Exception as e:
