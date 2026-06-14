@@ -140,6 +140,6 @@ Rows not listed below are **pending generation**.
 | # | task_id | Slug | Provider | Class | Generated | Last run / result |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | 1 | 1001 | debug-crashloop | generic | investigation | ✅ | MCP→kind, num_ctx 32768, env forwarded, judge gemma4-mcp:e2b (DEEPEVAL_DISABLE_TIMEOUTS=1). **e4b PASS: ChecklistScore 1.0** (all checks 1.0, OutcomeValidity 1.0, ToolInvocation 1.0) — listed pods then read logs → found DATABASE_URL root cause + fix. **e2b FAIL: ChecklistScore 0.25** — hallucinated pod name `frontend-xxxxx`, never reached logs. Clear capability contrast. Earlier infra fails: no-MCP tool-less; default num_ctx → empty; env not forwarded → "context does not exist". |
-| 12 | 1012 | create-basic-deployment | generic | live-action | ✅ | Generated (easy tier). Not yet run. |
-| 20 | 1020 | hpa-configuration | generic | live-action | ✅ | Generated (medium tier; web-app fixture). Not yet run. |
-| 21 | 1021 | blue-green-service | generic | live-action | ✅ | Generated (hard tier; v1/v2 + service fixture). Not yet run. |
+| 12 | 1012 | create-basic-deployment | generic | live-action | ✅ | e4b MCP→kind: **PASS 1.0 (4/4)**. generate_manifest 403'd (Vertex-backed, no GCP) → agent authored YAML itself, applied, verified nginx 3/3. Cluster confirms 3/3. |
+| 20 | 1020 | hpa-configuration | generic | live-action | ✅ | e4b MCP→kind: **PASS 0.8 (4/5)**. Applied correct HPA (web-app, averageUtilization 70, min1/max5). The one FAIL ("targets 70%") is a **judge false-negative** — cluster confirms target=70%. |
+| 21 | 1021 | blue-green-service | generic | live-action | ✅ | e4b MCP→kind: **PASS 1.0 (4/4)**. First patch malformed (selector as string) → self-corrected with map patch → selector flipped to version=v2. Cluster confirms selector={app:myapp,version:v2}. |
