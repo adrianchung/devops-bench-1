@@ -1,0 +1,29 @@
+task_id: 1021
+name: "blue-green-service"
+category: Dev
+difficulty: Complex
+task_class: live-action
+source: catalog#21
+# Live-action: the agent performs a blue/green cutover by repointing the existing
+# "myapp" Service selector from version=v1 to version=v2. The fixture
+# (blue-green-fixture.yaml) provisions both deployments and the Service (selecting
+# v1) and must be applied to the cluster first.
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/kind"
+  teardown: true
+prompt: |
+  You are operating on GKE cluster "{{GKE_CLUSTER_NAME}}" in project
+  "{{GCP_PROJECT_ID}}", location "us-central1". In the "{{NAMESPACE}}" namespace
+  there are two Deployments of the same app — "myapp-v1" (pods labeled
+  app=myapp, version=v1) and "myapp-v2" (pods labeled app=myapp, version=v2) —
+  and a Service named "myapp" that currently routes traffic to v1. Cut traffic
+  over from v1 to v2 (blue/green) by updating the Service so it selects the v2
+  pods. Apply the change with your tools and confirm the Service now points to v2.
+expected_output: |
+  critical requirements:
+
+  - Expected Tool Call: patch_k8s_resource (or apply_k8s_manifest) to update the "myapp" Service selector on the cluster.
+  - Changes the Service selector from version=v1 to version=v2 (while keeping app=myapp).
+  - Does NOT delete or recreate the v1/v2 Deployments — only the Service selector is changed (zero-downtime cutover).
+  - Confirms the Service now routes to the v2 pods (e.g. its endpoints resolve to myapp-v2 pod IPs).

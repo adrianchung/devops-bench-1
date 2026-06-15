@@ -152,3 +152,26 @@ leaderboard header so results stay reproducible.
 - Record the task-set git SHA (the catalog evolves).
 - LLM judges are stochastic — for borderline tasks, average ≥3 runs or fix
   temperature where the provider allows.
+
+## 7. Known caveats (observed in local runs)
+
+These came out of the first live-action runs (e4b agent, e2b judge, kind). They
+don't block runs but explain noise in the scores — keep them in mind, and prefer
+**ground-truth cluster checks** (`kubectl get ...`) to confirm a borderline result.
+
+- **`generate_manifest` 403s without GCP.** The GKE MCP `generate_manifest` tool is
+  Vertex-AI-backed and returns `403 insufficient authentication scopes` when no GCP
+  credentials are present (i.e. local kind runs). Capable agents recover by authoring
+  the YAML themselves and calling `apply_k8s_manifest`; weaker agents may get stuck.
+  When scoring local runs, treat a `generate_manifest` 403 as an environment
+  limitation, not an agent failure.
+- **gemma-as-judge produces false negatives.** Example: on `hpa-configuration` the
+  judge scored the "targets 70% CPU" check 0.0 even though the applied manifest had
+  `averageUtilization: 70` (cluster confirmed `target=70%`). The weak 2B/4B judge can
+  be thrown off by secondary signals (e.g. `kubectl get hpa` showing `<unknown>/70%`
+  because kind has no metrics-server). **Use a capable judge model for any real
+  leaderboard**; gemma is adequate only for pipeline smoke, not nuanced grading.
+- **Verify live-action outcomes against the cluster.** The LLM judge grades from the
+  trajectory/response; for live-action tasks, confirm the actual state changed
+  (deployment ready, HPA target, service selector, etc.) to catch both agent
+  over-claims and judge mis-scores.

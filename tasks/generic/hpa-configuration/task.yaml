@@ -1,0 +1,27 @@
+task_id: 1020
+name: "hpa-configuration"
+category: Dev
+difficulty: Hard
+task_class: live-action
+source: catalog#20
+# Live-action: the agent configures an HPA against the pre-provisioned "web-app"
+# Deployment (web-app-fixture.yaml must be applied to the cluster first). The
+# fixture sets CPU resource requests, which an HPA requires.
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/kind"
+  teardown: true
+prompt: |
+  You are operating on GKE cluster "{{GKE_CLUSTER_NAME}}" in project
+  "{{GCP_PROJECT_ID}}", location "us-central1". A Deployment named "web-app"
+  already exists in the "{{NAMESPACE}}" namespace. Configure a Horizontal Pod
+  Autoscaler for it that scales on 70% average CPU utilization. Apply it to the
+  cluster using your tools and confirm the HPA was created.
+expected_output: |
+  critical requirements:
+
+  - Expected Tool Call: apply_k8s_manifest (the agent must create the HorizontalPodAutoscaler on the cluster).
+  - Creates an HPA whose scaleTargetRef points to the "web-app" Deployment.
+  - Targets 70% average CPU utilization (averageUtilization: 70, or targetCPUUtilizationPercentage: 70 on the autoscaling/v1 API).
+  - Sets sensible bounds: minReplicas >= 1 and maxReplicas greater than minReplicas.
+  - Confirms the HPA exists on the cluster (e.g. kubectl get hpa shows the web-app target at 70%).

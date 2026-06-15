@@ -1,0 +1,31 @@
+# Fixture for the hpa-configuration task.
+# A "web-app" Deployment with CPU resource requests set, so a HorizontalPodAutoscaler
+# targeting CPU utilization is valid. Apply this to the task cluster before the agent runs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  labels:
+    app: web-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web-app
+        image: nginx:1.27
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 128Mi

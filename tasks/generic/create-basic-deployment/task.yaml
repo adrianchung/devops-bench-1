@@ -1,0 +1,26 @@
+task_id: 1012
+name: "create-basic-deployment"
+category: Dev
+difficulty: Easy
+task_class: live-action
+source: catalog#12
+# Live-action: the agent must apply the Deployment to the cluster (not just emit
+# YAML). Needs an MCP toolserver + a reachable cluster (see methodology §9).
+# No fixture required — the agent creates the resource from scratch.
+infrastructure:
+  deployer: "tofu"
+  stack: "prebuilt/kind"
+  teardown: true
+prompt: |
+  You are operating on GKE cluster "{{GKE_CLUSTER_NAME}}" in project
+  "{{GCP_PROJECT_ID}}", location "us-central1". Deploy an nginx Deployment named
+  "nginx" into the "{{NAMESPACE}}" namespace with 3 replicas, using the nginx
+  image and container port 80. Apply it to the cluster using your tools and
+  confirm that all 3 replicas become ready.
+expected_output: |
+  critical requirements:
+
+  - Expected Tool Call: apply_k8s_manifest (the agent must apply the Deployment to the cluster, not merely output YAML).
+  - Creates a Deployment named "nginx" in the target namespace with spec.replicas set to 3.
+  - The pod template uses the nginx image and exposes containerPort 80.
+  - Confirms the rollout succeeded and all 3 replicas are ready (3/3).
